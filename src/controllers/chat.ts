@@ -267,6 +267,32 @@ export async function insertChatMessage(req: Request, res: Response) {
           returnPayload.data.attachments.push(attachment);
         }
 
+        // Call AI service and store reply
+        const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+        const imageUrl = returnPayload.data.attachments[0]?.url ?? null;
+        try {
+          const aiRes = await fetch(`${aiServiceUrl}/api/v1/chatbot/query`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: Number(fields.chatId),
+              message: fields.message,
+              image_url: imageUrl,
+            }),
+            signal: AbortSignal.timeout(60000),
+          });
+          const aiData: any = await aiRes.json();
+          if (aiData?.success && aiData?.data?.response) {
+            await db.update(messagesTable)
+              .set({ reply: aiData.data.response })
+              .where(eq(messagesTable.id, msg.id));
+            returnPayload.data.reply = aiData.data.response;
+          }
+        } catch (aiErr) {
+          console.error('AI service error:', aiErr);
+          // non-fatal: message is saved, reply stays empty
+        }
+
         return res.status(201).send({ data: returnPayload.data });
       } catch (err) {
         console.error(err);
