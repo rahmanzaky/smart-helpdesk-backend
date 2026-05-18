@@ -55,12 +55,56 @@ export async function insertChat(req: Request, res: Response) {
         authorName: user.name,
       })
       .returning();
-    
+
     await addLogs('CHAT', req.user.id, req.user.name);
 
     return res.status(201).send({ data: chat });
   } catch (err) {
     console.error(err);
+    return res.sendStatus(500);
+  }
+}
+
+export async function deleteChat(req: Request, res: Response) {
+  const body = req.body as { chatId: number };
+
+  if (!req.user) {
+    return res.sendStatus(401);
+  }
+
+  try {
+    const [user] = await db
+      .select()
+      .from(employeeTable)
+      .where(eq(employeeTable.id, req.user.id));
+
+    const [chat] = await db
+      .select()
+      .from(chatTable)
+      .where(eq(chatTable.id, body.chatId));
+
+    if (!user || !chat) {
+      return res.status(400);
+    }
+
+    const isOwner = chat?.authorId === user?.id;
+    if (!isOwner) {
+      return res.status(403);
+    }
+
+    await db
+      .update(chatTable)
+      .set({ deleted: true })
+      .where(eq(chatTable.id, body.chatId));
+    
+    await db 
+      .update(messagesTable)
+      .set({deleted:true})
+      .where(eq(messagesTable.chatId, body.chatId));
+    
+    return res.status(200);
+  } catch (error) {
+    console.error(error);
     return res.sendStatus(500);
   }
 }
@@ -118,7 +162,13 @@ export async function insertChatMessage(req: Request, res: Response) {
   }
 
   try {
-    const busboy = Busboy({ headers: req.headers });
+    const busboy = Busboy({
+      headers: req.headers,
+      limits: {
+        fileSize: 10 * 1024 * 1024,
+        fieldSize: 100 * 1024,
+      }
+    });
     const fields: any = {};
     const uploads: Promise<any>[] = [];
 
@@ -136,7 +186,11 @@ export async function insertChatMessage(req: Request, res: Response) {
       file.on("end", () => {
         const buffer = Buffer.concat(chunks);
 
-        const key = `uploads/${Date.now()}-${info.filename}`;
+        const safeName = info.filename
+          .replace(/[^a-zA-Z0-9.\-_]/g, "_")
+          .slice(0, 100);
+
+        const key = `uploads/${Date.now()}-${safeName}`;
 
         const uploadPromise = uploadToR2Buffer(buffer, key, info.mimeType);
 
@@ -174,7 +228,7 @@ export async function insertChatMessage(req: Request, res: Response) {
           .values({
             chatId: fields.chatId,
             authorId: req.user.id,
-            authorName: '', // optionally join employeeTable
+            authorName: req.user.name, // optionally join employeeTable
             message: fields.message,
             reply: fields.reply ?? '',
           })

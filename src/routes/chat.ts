@@ -6,6 +6,7 @@ const router: RouterType = Router();
 
 router.get('/chats', requireAuth, ChatController.getChats);
 router.post('/chats', requireAuth, ChatController.insertChat);
+router.delete('/chats', requireAuth, ChatController.deleteChat);
 router.get('/messages', requireAuth, ChatController.getChatMessages);
 router.post('/messages', requireAuth, ChatController.insertChatMessage);
 

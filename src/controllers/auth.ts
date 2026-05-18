@@ -60,7 +60,7 @@ export async function register(req: Request, res: Response) {
         .returning();
       const { data, error } = await sendVerificationMail(body.email, rawToken);
       if (error) {
-        return res.status(500).send({ error: 'failed to send verification email' });
+        return res.status(500).send({ message: 'failed to send verification email', error });
       }
       return res.status(400).send({ error: 'email already exists' });
     } else if (existing && existing.isVerified) {
@@ -90,7 +90,7 @@ export async function register(req: Request, res: Response) {
 
     const { data, error } = await sendVerificationMail(body.email, rawToken);
     if (error) {
-      return res.status(201).send({ message: 'user created, failed to send verification email' });
+      return res.status(201).send({ message: 'user created, failed to send verification email', error });
     }
 
     const userInfo = {
@@ -560,12 +560,37 @@ export async function resetPassword(req: Request, res: Response) {
       .update(refreshTokens)
       .set({ revoked: true })
       .where(eq(refreshTokens.userId, user.id));
-    
+
     addLogs('PASSWORD', user.id, user.name);
 
     return res.status(200).send({ message: 'password reset successful' });
   } catch (err) {
     console.error(err);
+    return res.status(500).send({ error: 'server error' });
+  }
+}
+
+export async function me(req: Request, res: Response) {
+  if (!req.user) {
+    return res.sendStatus(401);
+  }
+
+  try {
+    const [user] = await db
+      .select({
+        id: employeeTable.id,
+        name: employeeTable.name,
+        email: employeeTable.email,
+        role: employeeTable.role,
+        createdTime: employeeTable.createdTime,
+        isVerified: employeeTable.isVerified
+      })
+      .from(employeeTable)
+      .where(eq(employeeTable.id, req.user.id));
+
+    return res.status(200).send({data: user})
+  } catch (error) {
+    console.error(error);
     return res.status(500).send({ error: 'server error' });
   }
 }
