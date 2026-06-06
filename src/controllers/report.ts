@@ -43,6 +43,15 @@ function buildSummary(logs: { action: string; userId: number; userName: string }
   return { total: logs.length, byAction, byUser };
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 const ACTION_LABELS: Record<string, string> = {
   LOGIN: 'Login',
   LOGOUT: 'Logout',
@@ -93,7 +102,7 @@ function buildHtml(
     <tr>
       <td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;font-size:14px;color:#374151;">
         <span style="display:inline-block;width:22px;height:22px;background:#e0e7ff;border-radius:50%;text-align:center;line-height:22px;font-size:11px;font-weight:700;color:#004aad;margin-right:8px;">${i + 1}</span>
-        ${u.userName}
+        ${escapeHtml(u.userName)}
       </td>
       <td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;font-size:14px;font-weight:700;color:#004aad;text-align:right;">
         ${u.count} aktivitas
@@ -118,20 +127,20 @@ function buildHtml(
         <div style="background:#f8fafc;border-radius:12px;padding:20px;margin-bottom:12px;border-left:4px solid ${catColor};">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
             <div>
-              <div style="font-size:14px;font-weight:700;color:#1a1a2e;">${c.title}</div>
-              <div style="font-size:11px;color:#9ca3af;margin-top:2px;">${c.authorName} · ${fmt(new Date(c.createdTime))}</div>
+              <div style="font-size:14px;font-weight:700;color:#1a1a2e;">${escapeHtml(c.title)}</div>
+              <div style="font-size:11px;color:#9ca3af;margin-top:2px;">${escapeHtml(c.authorName)} · ${fmt(new Date(c.createdTime))}</div>
             </div>
-            <span style="background:${catColor}20;color:${catColor};font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;white-space:nowrap;margin-left:12px;">${parsed.category}</span>
+            <span style="background:${catColor}20;color:${catColor};font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;white-space:nowrap;margin-left:12px;">${escapeHtml(parsed.category ?? '')}</span>
           </div>
           <table style="width:100%;border-collapse:collapse;">
             <tr>
               <td style="width:50%;vertical-align:top;padding-right:10px;">
                 <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;margin-bottom:4px;">Masalah</div>
-                <div style="font-size:13px;color:#374151;">${parsed.reported_issue}</div>
+                <div style="font-size:13px;color:#374151;">${escapeHtml(parsed.reported_issue ?? '')}</div>
               </td>
               <td style="width:50%;vertical-align:top;padding-left:10px;border-left:1px solid #e5e7eb;">
                 <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;margin-bottom:4px;">Solusi</div>
-                <div style="font-size:13px;color:#374151;">${parsed.solution}</div>
+                <div style="font-size:13px;color:#374151;">${escapeHtml(parsed.solution ?? '')}</div>
               </td>
             </tr>
           </table>

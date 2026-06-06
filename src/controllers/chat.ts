@@ -125,6 +125,17 @@ export async function getChatMessages(req: Request, res: Response) {
   }
 
   try {
+    // Verify chat belongs to requesting user (admin can access any)
+    const [chat] = await db
+      .select()
+      .from(chatTable)
+      .where(and(eq(chatTable.id, cid), eq(chatTable.deleted, false)));
+
+    if (!chat) return res.status(404).send({ error: 'chat not found' });
+    if (chat.authorId !== req.user.id && req.user.role !== 'admin') {
+      return res.sendStatus(403);
+    }
+
     const messages = await db.query.messagesTable.findMany({
       where: (t, { eq }) => eq(t.chatId, cid),
       orderBy: (t, { desc }) => desc(t.createdTime),
@@ -339,6 +350,13 @@ export async function generateChatSummary(req: Request, res: Response) {
   }
 
   try {
+    // Verify ownership (admin can summarize any chat)
+    const [chat] = await db.select().from(chatTable).where(and(eq(chatTable.id, chatId), eq(chatTable.deleted, false)));
+    if (!chat) return res.status(404).send({ error: 'chat not found' });
+    if (chat.authorId !== req.user.id && req.user.role !== 'admin') {
+      return res.sendStatus(403);
+    }
+
     const messages = await db.query.messagesTable.findMany({
       where: (t, { eq }) => eq(t.chatId, chatId),
       orderBy: (t, { asc }) => asc(t.createdTime),

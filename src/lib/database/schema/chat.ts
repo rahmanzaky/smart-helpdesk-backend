@@ -23,7 +23,7 @@ export const messagesTable = pgTable('messages', {
   authorId: integer('author_id').references((): PgColumn => employeeTable.id).notNull(),
   authorName: text('author_name').notNull(),
   message: text().notNull(),
-  reply: text().notNull(),
+  reply: text(),
   ...sharedColumns,
 });
 

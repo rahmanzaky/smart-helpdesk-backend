@@ -1,20 +1,12 @@
 import 'dotenv/config';
-import nodemailer from "nodemailer";
 import axios from "axios";
 
 if (!process.env.FRONTEND_URL) {
   console.warn('WARNING: FRONTEND_URL is not set. Email links will not work correctly.');
 }
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+const SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL ?? 'capstonetest7@gmail.com';
+const SENDER_NAME = 'SEJAHE Smart Helpdesk';
 
 export async function sendVerificationMail(to: string, token: string) {
   try {
@@ -22,8 +14,8 @@ export async function sendVerificationMail(to: string, token: string) {
       "https://api.brevo.com/v3/smtp/email",
       {
         sender: {
-          name: "Capstone Test",
-          email: "capstonetest7@gmail.com",
+          name: SENDER_NAME,
+          email: SENDER_EMAIL,
         },
         to: [{ email: to }],
         subject: "Verify your email",
@@ -66,8 +58,8 @@ export async function sendResetMail(to: string, token: string, userId: number) {
       "https://api.brevo.com/v3/smtp/email",
       {
         sender: {
-          name: "SEJAHE Smart Helpdesk",
-          email: "capstonetest7@gmail.com",
+          name: SENDER_NAME,
+          email: SENDER_EMAIL,
         },
         to: [{ email: to }],
         subject: "Reset Password - SEJAHE Smart Helpdesk",
@@ -124,8 +116,8 @@ export async function sendWelcomeEmail(to: string, name: string, tempPassword: s
       "https://api.brevo.com/v3/smtp/email",
       {
         sender: {
-          name: "SEJAHE Smart Helpdesk",
-          email: "capstonetest7@gmail.com",
+          name: SENDER_NAME,
+          email: SENDER_EMAIL,
         },
         to: [{ email: to }],
         subject: "Selamat Datang di SEJAHE Smart Helpdesk",
@@ -184,8 +176,8 @@ export async function sendSummaryReport(to: string, htmlContent: string) {
       "https://api.brevo.com/v3/smtp/email",
       {
         sender: {
-          name: "Capstone Test",
-          email: "capstonetest7@gmail.com",
+          name: SENDER_NAME,
+          email: SENDER_EMAIL,
         },
         to: [{ email: to }],
         subject: "Summary Report",

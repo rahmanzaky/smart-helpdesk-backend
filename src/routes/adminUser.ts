@@ -5,7 +5,7 @@ import { type Request, type Response, type NextFunction } from 'express';
 
 const router: RouterType = Router();
 
-function requireAdmin(req: Request, res: Response, next: NextFunction) {
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   if (!req.user || req.user.role !== 'admin') {
     return res.sendStatus(403);
   }
