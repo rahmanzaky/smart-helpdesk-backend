@@ -311,3 +311,57 @@ export async function insertChatMessage(req: Request, res: Response) {
     return res.sendStatus(500);
   }
 }
+
+export async function generateChatSummary(req: Request, res: Response) {
+  const { chatId } = req.body as { chatId: number };
+
+  if (!req.user) {
+    return res.sendStatus(401);
+  }
+
+  try {
+    const messages = await db.query.messagesTable.findMany({
+      where: (t, { eq }) => eq(t.chatId, chatId),
+      orderBy: (t, { asc }) => asc(t.createdTime),
+    });
+
+    if (!messages || messages.length === 0) {
+      return res.status(400).send({ error: 'Tidak ada riwayat pesan untuk diringkas' });
+    }
+
+    let chatHistoryText = '';
+    messages.forEach((msg) => {
+      chatHistoryText += `User (${msg.authorName}): ${msg.message}\n`;
+      if (msg.reply) {
+        chatHistoryText += `Bot: ${msg.reply}\n`;
+      }
+    });
+
+    const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+    const aiRes = await fetch(`${aiServiceUrl}/api/v1/chatbot/summarize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, chat_history: chatHistoryText }),
+      signal: AbortSignal.timeout(60000),
+    });
+
+    const aiData: any = await aiRes.json();
+
+    if (aiData?.success && aiData?.data?.summary) {
+      await db
+        .update(chatTable)
+        .set({ summary: aiData.data.summary })
+        .where(eq(chatTable.id, chatId));
+
+      return res.status(200).send({
+        message: 'Summary berhasil dibuat',
+        summary: aiData.data.summary,
+      });
+    } else {
+      return res.status(500).send({ error: 'AI Service gagal membuat summary' });
+    }
+  } catch (err) {
+    console.error('Error generating summary:', err);
+    return res.status(500).send({ error: 'Internal Server Error' });
+  }
+}

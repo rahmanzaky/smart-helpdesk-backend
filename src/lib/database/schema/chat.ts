@@ -13,6 +13,7 @@ export const chatTable = pgTable('chat', {
   title: text().notNull(),
   authorId: integer('author_id').references((): PgColumn => employeeTable.id).notNull(),
   authorName: text('author_name').notNull(),
+  summary: text('summary'),
   ...sharedColumns,
 });
 
