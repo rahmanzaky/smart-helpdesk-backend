@@ -477,7 +477,7 @@ export async function forgotPassword(req: Request, res: Response) {
       expiresAt: new Date(Date.now() + 1000 * 60 * 15), // 15 min
     });
 
-    await sendResetMail(user.email, rawToken);
+    await sendResetMail(user.email, rawToken, user.id);
 
     return res.status(200).send({
       message: 'Reset link has been sent'

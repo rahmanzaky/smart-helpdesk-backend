@@ -59,20 +59,37 @@ export async function sendVerificationMail(to: string, token: string) {
   // return { data, error };
 }
 
-export async function sendResetMail(to: string, token: string) {
+export async function sendResetMail(to: string, token: string, userId: number) {
+  const resetUrl = `${process.env.FRONTEND_URL}?action=reset-password&token=${token}&id=${userId}`;
   try {
     const response = await axios.post(
       "https://api.brevo.com/v3/smtp/email",
       {
         sender: {
-          name: "Capstone Test",
+          name: "SEJAHE Smart Helpdesk",
           email: "capstonetest7@gmail.com",
         },
         to: [{ email: to }],
-        subject: "Reset your password",
-        htmlContent: `
-          <p>You can reset your password here: ${process.env.FRONTEND_URL}/reset-password?token=${token}</p><p>Your token: ${token}</p>
-        `,
+        subject: "Reset Password - SEJAHE Smart Helpdesk",
+        htmlContent: `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div style="max-width:480px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <div style="background:#004aad;padding:28px 36px;">
+      <div style="font-size:20px;font-weight:900;color:#fff;">SEJAHE Smart Helpdesk</div>
+      <div style="font-size:12px;color:#bfdbfe;margin-top:4px;">PT. Indonesia Epson Industry</div>
+    </div>
+    <div style="padding:32px 36px;">
+      <h2 style="margin:0 0 8px;font-size:20px;font-weight:800;color:#1a1a2e;">Reset Password Anda</h2>
+      <p style="color:#6b7280;font-size:14px;line-height:1.6;margin:0 0 24px;">Kami menerima permintaan reset password untuk akun <strong>${to}</strong>. Klik tombol di bawah untuk membuat password baru. Link ini berlaku selama <strong>15 menit</strong>.</p>
+      <a href="${resetUrl}" style="display:inline-block;background:#004aad;color:#fff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:12px;text-decoration:none;">Reset Password</a>
+      <p style="color:#9ca3af;font-size:12px;margin-top:24px;">Jika Anda tidak meminta reset password, abaikan email ini. Password Anda tidak akan berubah.</p>
+    </div>
+    <div style="background:#f8fafc;padding:16px 36px;border-top:1px solid #e5e7eb;text-align:center;">
+      <div style="font-size:11px;color:#9ca3af;">© SEJAHE · PT. Indonesia Epson Industry</div>
+    </div>
+  </div>
+</body></html>`,
       },
       {
         headers: {
