@@ -7,7 +7,7 @@ export const pgPool =
   (() => {
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: false,
+      ssl: process.env.NODE_ENV === 'production',
       keepAlive: true,
     });
 

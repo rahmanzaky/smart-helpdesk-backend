@@ -7,6 +7,10 @@ import { uploadToR2Buffer } from '../lib/helper/image.js';
 import Busboy from 'busboy';
 import { addLogs } from '../lib/helper/logs.js';
 
+if (!process.env.AI_SERVICE_URL) {
+  console.warn('WARNING: AI_SERVICE_URL is not set. Defaulting to http://localhost:8000');
+}
+
 export async function getChats(req: Request, res: Response) {
   if (!req.user) {
     return res.sendStatus(401);

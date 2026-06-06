@@ -1,7 +1,11 @@
+import 'dotenv/config';
 import express, { type Express } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import v1Routes from './routes/index.js';
+import { validateEnv } from './lib/validateEnv.js';
+
+validateEnv();
 
 const app: Express = express();
 
@@ -22,7 +26,9 @@ const app: Express = express();
 // }));
 
 app.use(cors({
-  origin: true,
+  origin: process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['http://localhost:5173'],
   credentials: true,
 }));
 app.use(cookieParser());

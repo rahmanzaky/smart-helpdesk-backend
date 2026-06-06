@@ -3,6 +3,10 @@ import { Resend } from "resend";
 import nodemailer from "nodemailer";
 import axios from "axios";
 
+if (!process.env.FRONTEND_URL) {
+  console.warn('WARNING: FRONTEND_URL is not set. Email links will not work correctly.');
+}
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: 465,
@@ -29,7 +33,7 @@ export async function sendVerificationMail(to: string, token: string) {
         to: [{ email: to }],
         subject: "Verify your email",
         htmlContent: `
-          <p>Your token: ${token}</p>
+          <p>You can verify your account here: ${process.env.FRONTEND_URL}/verify-email?token=${token}</p><p>Your token: ${token}</p>
         `,
       },
       {
@@ -72,7 +76,7 @@ export async function sendResetMail(to: string, token: string) {
         to: [{ email: to }],
         subject: "Reset your password",
         htmlContent: `
-          <p>You can reset your password here: ${'LINK_TO_RESET_FRONTEND'}</p><p>Your token: ${token}</p>
+          <p>You can reset your password here: ${process.env.FRONTEND_URL}/reset-password?token=${token}</p><p>Your token: ${token}</p>
         `,
       },
       {
