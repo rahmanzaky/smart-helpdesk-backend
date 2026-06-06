@@ -3,7 +3,7 @@ import { type NextFunction, type Request, type Response } from 'express';
 import { and, eq, ne, desc } from 'drizzle-orm';
 import { chatTable, messageAttachment, messageAttachmentJoint, messagesTable } from '../lib/database/schema/chat.js';
 import { employeeTable } from '../lib/database/schema/employee.js';
-import { uploadToR2Buffer } from '../lib/helper/image.js';
+import { uploadToR2Buffer, generatePresignedUrl } from '../lib/helper/image.js';
 import Busboy from 'busboy';
 import { addLogs } from '../lib/helper/logs.js';
 
@@ -20,7 +20,7 @@ export async function getChats(req: Request, res: Response) {
     const chats = await db
       .select()
       .from(chatTable)
-      .where(eq(chatTable.authorId, req.user.id))
+      .where(and(eq(chatTable.authorId, req.user.id), eq(chatTable.deleted, false)))
       .orderBy(desc(chatTable.createdTime));
 
     return res.status(200).send({ data: chats });
@@ -88,25 +88,25 @@ export async function deleteChat(req: Request, res: Response) {
       .where(eq(chatTable.id, body.chatId));
 
     if (!user || !chat) {
-      return res.status(400);
+      return res.sendStatus(400);
     }
 
     const isOwner = chat?.authorId === user?.id;
     if (!isOwner) {
-      return res.status(403);
+      return res.sendStatus(403);
     }
 
     await db
       .update(chatTable)
       .set({ deleted: true })
       .where(eq(chatTable.id, body.chatId));
-    
-    await db 
+
+    await db
       .update(messagesTable)
-      .set({deleted:true})
+      .set({ deleted: true })
       .where(eq(messagesTable.chatId, body.chatId));
-    
-    return res.status(200);
+
+    return res.sendStatus(200);
   } catch (error) {
     console.error(error);
     return res.sendStatus(500);
@@ -273,7 +273,9 @@ export async function insertChatMessage(req: Request, res: Response) {
 
         // Call AI service and store reply
         const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
-        const imageUrl = returnPayload.data.attachments[0]?.url ?? null;
+        const attachmentUrl = returnPayload.data.attachments[0]?.url ?? null;
+        const attachmentKey = attachmentUrl ? attachmentUrl.replace(`${process.env.R2_PUBLIC_URL}/`, '') : null;
+        const imageUrl = attachmentKey ? await generatePresignedUrl(attachmentKey) : null;
         try {
           const aiRes = await fetch(`${aiServiceUrl}/api/v1/chatbot/query`, {
             method: 'POST',

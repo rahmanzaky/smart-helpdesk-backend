@@ -1,5 +1,4 @@
 import 'dotenv/config';
-import { Resend } from "resend";
 import nodemailer from "nodemailer";
 import axios from "axios";
 
@@ -16,10 +15,6 @@ const transporter = nodemailer.createTransport({
     pass: process.env.SMTP_PASS,
   },
 });
-
-console.log(process.env.BREVO_API_KEY)
-
-const resend = new Resend(process.env.RESEND_API_KEY!);
 
 export async function sendVerificationMail(to: string, token: string) {
   try {
@@ -106,7 +101,7 @@ export async function sendResetMail(to: string, token: string) {
   // return { data, error };
 }
 
-export async function sendSummaryReport(to: string, summaryData: any) {
+export async function sendSummaryReport(to: string, htmlContent: string) {
   try {
     const response = await axios.post(
       "https://api.brevo.com/v3/smtp/email",
@@ -117,9 +112,7 @@ export async function sendSummaryReport(to: string, summaryData: any) {
         },
         to: [{ email: to }],
         subject: "Summary Report",
-        htmlContent: `
-          <p>theres ${summaryData} logs </p>
-        `,
+        htmlContent,
       },
       {
         headers: {
