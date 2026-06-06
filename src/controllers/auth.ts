@@ -285,6 +285,7 @@ export async function login(req: Request, res: Response) {
       role: user.role,
       isVerified: user.isVerified,
       deleted: user.deleted,
+      mustChangePassword: user.mustChangePassword,
     }
 
     res.cookie('token', rawToken, {
@@ -570,6 +571,48 @@ export async function resetPassword(req: Request, res: Response) {
   }
 }
 
+export async function changePassword(req: Request, res: Response) {
+  if (!req.user) {
+    return res.sendStatus(401);
+  }
+
+  const body = req.body as { currentPassword: string; newPassword: string };
+
+  if (!body?.currentPassword || !body?.newPassword) {
+    return res.status(400).send({ error: 'currentPassword and newPassword are required' });
+  }
+
+  try {
+    const [user] = await db
+      .select()
+      .from(employeeTable)
+      .where(eq(employeeTable.id, req.user.id));
+
+    if (!user) {
+      return res.status(404).send({ error: 'user not found' });
+    }
+
+    const isCorrect = await argon2.verify(user.password, body.currentPassword);
+    if (!isCorrect) {
+      return res.status(400).send({ error: 'incorrect current password' });
+    }
+
+    const newHash = await argon2.hash(body.newPassword);
+
+    await db
+      .update(employeeTable)
+      .set({ password: newHash, mustChangePassword: false })
+      .where(eq(employeeTable.id, user.id));
+
+    addLogs('PASSWORD', user.id, user.name);
+
+    return res.status(200).send({ message: 'password changed successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: 'server error' });
+  }
+}
+
 export async function me(req: Request, res: Response) {
   if (!req.user) {
     return res.sendStatus(401);
@@ -583,7 +626,8 @@ export async function me(req: Request, res: Response) {
         email: employeeTable.email,
         role: employeeTable.role,
         createdTime: employeeTable.createdTime,
-        isVerified: employeeTable.isVerified
+        isVerified: employeeTable.isVerified,
+        mustChangePassword: employeeTable.mustChangePassword,
       })
       .from(employeeTable)
       .where(eq(employeeTable.id, req.user.id));

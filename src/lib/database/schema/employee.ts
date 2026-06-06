@@ -15,6 +15,7 @@ export const employeeTable = pgTable('org_employee', {
   role: text({enum: ['employee', 'manager', 'admin']}).notNull().default('employee'),
   password: text().notNull(),
   isVerified: boolean('is_verified').notNull().default(false),
+  mustChangePassword: boolean('must_change_password').notNull().default(false),
   ...sharedColumns,
 });
 

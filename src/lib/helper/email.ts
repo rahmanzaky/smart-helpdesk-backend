@@ -118,6 +118,66 @@ export async function sendResetMail(to: string, token: string, userId: number) {
   // return { data, error };
 }
 
+export async function sendWelcomeEmail(to: string, name: string, tempPassword: string) {
+  try {
+    const response = await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: {
+          name: "SEJAHE Smart Helpdesk",
+          email: "capstonetest7@gmail.com",
+        },
+        to: [{ email: to }],
+        subject: "Selamat Datang di SEJAHE Smart Helpdesk",
+        htmlContent: `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div style="max-width:480px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <div style="background:#004aad;padding:28px 36px;">
+      <div style="font-size:20px;font-weight:900;color:#fff;">SEJAHE Smart Helpdesk</div>
+      <div style="font-size:12px;color:#bfdbfe;margin-top:4px;">PT. Indonesia Epson Industry</div>
+    </div>
+    <div style="padding:32px 36px;">
+      <h2 style="margin:0 0 8px;font-size:20px;font-weight:800;color:#1a1a2e;">Selamat Datang, ${name}!</h2>
+      <p style="color:#6b7280;font-size:14px;line-height:1.6;margin:0 0 24px;">Akun Anda telah dibuat oleh administrator. Gunakan kredensial di bawah untuk login pertama kali.</p>
+      <div style="background:#f8fafc;border-radius:12px;padding:20px 24px;margin-bottom:24px;border:1px solid #e5e7eb;">
+        <div style="margin-bottom:12px;">
+          <span style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;">Email</span>
+          <p style="margin:4px 0 0;font-size:15px;font-weight:700;color:#1a1a2e;">${to}</p>
+        </div>
+        <div>
+          <span style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;">Password Sementara</span>
+          <p style="margin:4px 0 0;font-size:18px;font-weight:900;color:#004aad;letter-spacing:0.08em;font-family:monospace;">${tempPassword}</p>
+        </div>
+      </div>
+      <div style="background:#fef3c7;border-radius:10px;padding:14px 18px;margin-bottom:24px;border:1px solid #fcd34d;">
+        <p style="margin:0;font-size:13px;font-weight:600;color:#92400e;">⚠️ Anda wajib mengganti password ini saat pertama kali login.</p>
+      </div>
+    </div>
+    <div style="background:#f8fafc;padding:16px 36px;border-top:1px solid #e5e7eb;text-align:center;">
+      <div style="font-size:11px;color:#9ca3af;">© SEJAHE · PT. Indonesia Epson Industry</div>
+    </div>
+  </div>
+</body></html>`,
+      },
+      {
+        headers: {
+          "api-key": process.env.BREVO_API_KEY!,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return {
+      data: response.data,
+      error: null,
+    };
+  } catch (error) {
+    console.error(error);
+    return { data: null, error };
+  }
+}
+
 export async function sendSummaryReport(to: string, htmlContent: string) {
   try {
     const response = await axios.post(

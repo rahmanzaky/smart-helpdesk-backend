@@ -8,6 +8,20 @@
       "when": 1780722337799,
       "tag": "0000_demonic_wendigo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1780727608224,
+      "tag": "0001_bumpy_peter_quill",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780731954661,
+      "tag": "0002_soft_the_executioner",
+      "breakpoints": true
     }
   ]
 }
