@@ -10,5 +10,6 @@ router.delete('/chats', requireAuth, ChatController.deleteChat);
 router.get('/messages', requireAuth, ChatController.getChatMessages);
 router.post('/messages', requireAuth, ChatController.insertChatMessage);
 router.post('/chats/summary', requireAuth, ChatController.generateChatSummary);
+router.get('/admin/chats', requireAuth, ChatController.adminGetAllChats);
 
 export default router;

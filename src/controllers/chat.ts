@@ -312,6 +312,25 @@ export async function insertChatMessage(req: Request, res: Response) {
   }
 }
 
+export async function adminGetAllChats(req: Request, res: Response) {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.sendStatus(403);
+  }
+
+  try {
+    const chats = await db
+      .select()
+      .from(chatTable)
+      .where(eq(chatTable.deleted, false))
+      .orderBy(desc(chatTable.createdTime));
+
+    return res.status(200).send({ data: chats });
+  } catch (err) {
+    console.error(err);
+    return res.sendStatus(500);
+  }
+}
+
 export async function generateChatSummary(req: Request, res: Response) {
   const { chatId } = req.body as { chatId: number };
 
@@ -348,9 +367,13 @@ export async function generateChatSummary(req: Request, res: Response) {
     const aiData: any = await aiRes.json();
 
     if (aiData?.success && aiData?.data?.summary) {
+      const summaryJson = typeof aiData.data.summary === 'string'
+        ? aiData.data.summary
+        : JSON.stringify(aiData.data.summary);
+
       await db
         .update(chatTable)
-        .set({ summary: aiData.data.summary })
+        .set({ summary: summaryJson })
         .where(eq(chatTable.id, chatId));
 
       return res.status(200).send({
